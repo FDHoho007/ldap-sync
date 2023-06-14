@@ -1,0 +1,10 @@
+[
+    {
+        "title": "Finanzen",
+        "ldap_groups": ["finanzen"]
+    },
+    {
+        "title": "Administration IT-Systeme",
+        "ldap_groups": ["admin"]
+    }
+]
