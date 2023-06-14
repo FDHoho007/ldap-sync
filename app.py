@@ -37,26 +37,23 @@ attrs = []
 for attr in ["uid", "first_name", "last_name", "display_name", "email", "memberof"]:
     attrs.append(config["user"][attr + "_attr"])
 
+# Read users from ldap into users array
 users = []
 for user_data in ldap_connection.search_s(config["user"]["base"], ldap.SCOPE_SUBTREE, config["user"]["filter"], attrs):
     user_data = user_data[1]
+    # Parse user groups
     groups = []
     if config["user"]["memberof_attr"] in user_data:
         for group in user_data[config["user"]["memberof_attr"]]:
             group = get_group(group.decode())
             if group is not None:
                 groups.append(group)
-    user = User(uid=get_attr(user_data, "uid"),
+    users.append(User(uid=get_attr(user_data, "uid"),
                 first_name=get_attr(user_data, "first_name"),
                 last_name=get_attr(user_data, "last_name"),
                 display_name=get_attr(user_data, "display_name"),
                 email=get_attr(user_data, "email"),
-                groups=groups)
-    users.append(user)
-    for service in services:
-        if not service.enforce:
-            service.synchronize(user)
+                groups=groups))
 
 for service in services:
-    if service.enforce:
-        service.synchronize_all(users)
+    service.synchronize_all(users)

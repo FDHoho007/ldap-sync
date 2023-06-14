@@ -1,6 +1,5 @@
 from lib.mapper import Mapper
 from lib.service import IService
-from lib.user import User
 import urllib.parse
 import requests
 
@@ -64,24 +63,25 @@ class GitLabService(IService):
         elif "gitlab_project" in mapping:
             return mapping["gitlab_project"], True
 
-    def synchronize(self, user: User):
-        user_id = self.get_user_id(user[self.config["uid_attr"]])
-        if user_id is None:
-            self.error("Failed to sync user " + user[self.config["uid_attr"]] + " because we couldn't find this account on " + self.config["url"])
-            return
-        self.debug("Sync GitLab User " + user[self.config["uid_attr"]] + " on " + self.config["url"])
-        for mapping in self.mapper.get_mappings():
-            matches = mapping.applies_to_user(user)
-            id, is_project = self.mapping_id(mapping)
-            access_level = (self.members[id][user_id] if user_id in self.members[id] else 0)
-            if matches:
-                if access_level == 0:
-                    self.add_membership(id, user_id, mapping["access_level"], is_project)
-                    self.info("Added " + user.uid + " to group/project " + id)
-                elif access_level != mapping["access_level"]:
-                    self.edit_membership(id, user_id, mapping["access_level"], is_project)
-                    self.info("Changed role for " + user.uid + " in group/project " + id)
-            else:
-                if access_level != 0:
-                    self.remove_membership(id, user_id, is_project)
-                    self.info("Removed " + user.uid + " from group/project " + id)
+    def synchronize_all(self, users: list):
+        for user in users:
+            user_id = self.get_user_id(user[self.config["uid_attr"]])
+            if user_id is None:
+                self.error("Failed to sync user " + user[self.config["uid_attr"]] + " because we couldn't find this account on " + self.config["url"])
+                return
+            self.debug("Sync GitLab User " + user[self.config["uid_attr"]] + " on " + self.config["url"])
+            for mapping in self.mapper.get_mappings():
+                matches = mapping.applies_to_user(user)
+                id, is_project = self.mapping_id(mapping)
+                access_level = (self.members[id][user_id] if user_id in self.members[id] else 0)
+                if matches:
+                    if access_level == 0:
+                        self.add_membership(id, user_id, mapping["access_level"], is_project)
+                        self.info("Added " + user.uid + " to group/project " + id)
+                    elif access_level != mapping["access_level"]:
+                        self.edit_membership(id, user_id, mapping["access_level"], is_project)
+                        self.info("Changed role for " + user.uid + " in group/project " + id)
+                else:
+                    if access_level != 0:
+                        self.remove_membership(id, user_id, is_project)
+                        self.info("Removed " + user.uid + " from group/project " + id)

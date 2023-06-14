@@ -15,10 +15,6 @@ class IService(metaclass=abc.ABCMeta):
         self.mapper = mapper
         self.verbose_level = verbose_level
         self.dry_run = dry_run
-        self.enforce = False
-
-    def synchronize(self, user: User):
-        pass
 
     def synchronize_all(self, users: list):
         pass

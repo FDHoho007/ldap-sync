@@ -8,7 +8,6 @@ class Mailman2Service(IService):
     def __init__(self, config, mapper: Mapper, verbose_level: int, dry_run: bool):
         self.name = "mailman2"
         super().__init__(config, mapper, verbose_level, dry_run)
-        self.enforce = True
         self.headers = {}
 
     def list(self, list_id: str):

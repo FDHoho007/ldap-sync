@@ -6,7 +6,6 @@ class RedmineService(IService):
     def __init__(self, config, mapper: Mapper, verbose_level: int, dry_run: bool):
         self.name = "redmine"
         super().__init__(config, mapper, verbose_level, dry_run)
-        self.enforce = True
 
     def synchronize_all(self, users: list):
         project_id, page_id = self.config["page"].split("/")
