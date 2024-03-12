@@ -5,6 +5,8 @@ from providers.github import GitHubProvider
 from providers.gitlab import GitLabProvider
 from providers.mailman3 import Mailman3Provider
 from providers.redmine import RedmineProvider
+from providers.mattermost import MattermostProvider
+from providers.studip import StudIPProvider
 
 parser = argparse.ArgumentParser(description="Sync (primarly) user groups between ldap and other services.")
 parser.add_argument("--verbose", "-v", help="Print debug information about what the script is doing. (-v only changes, -vv everything)", action="count", default=0)
@@ -29,7 +31,7 @@ ldap_connection = ldap.initialize(config["ldap"]["uri"])
 ldap_connection.simple_bind_s(who=config["ldap"]["bind_dn"], cred=config["ldap"]["bind_pw"])
 
 # Put all active providers into this array
-providers = [RedmineProvider(config["redmine"])]
+providers = [StudIPProvider(config["studip"])]
 
 attrs = [config["member"]["uid_attr"]]
 for provider in providers:

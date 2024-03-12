@@ -6,7 +6,7 @@ class GitLabProvider(IUpdateProvider):
     def __init__(self, config):
         super().__init__("GitLab", config)
         self.attrs = [config["username_attr"]]
-        self.gitlab_uid_cache = {} # Th uid cache could probably even be stored on disk, since they won't change
+        self.gitlab_uid_cache = {} # The uid cache could probably even be stored on disk, since they won't change
 
     def api(self, method, url, data = None):
         return lib.api(method, self.config["url"] + url, self.config["api_token"], data)

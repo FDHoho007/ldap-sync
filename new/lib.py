@@ -12,9 +12,15 @@ def api(method, url, auth = None, data = None):
     if method == "GET":
         return requests.get(url, headers=headers).json()
     elif method == "POST":
-        return requests.post(url, data=data, headers=headers).json()
+        if isinstance(data, str):
+            return requests.post(url, data=data, headers=headers).json()
+        else:
+            return requests.post(url, json=data, headers=headers).json()
     elif method == "PUT":
-        return requests.put(url, data=data, headers=headers).json()
+        if isinstance(data, str):
+            return requests.put(url, data=data, headers=headers).json()
+        else:
+            return requests.put(url, json=data, headers=headers).json()
     elif method == "DELETE":
         requests.delete(url, headers=headers).json()
 
