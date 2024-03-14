@@ -17,7 +17,7 @@ class GitHubProvider(IUpdateProvider):
         for group in groups:
             group["members"] = []
             for m in self.api_group(group, "GET", "?per_page=100&role=" + group["role"]):
-                if m["login"] != "FSinfoAdmin":
+                if m["login"] != self.config["bot_user_login"]:
                     group["members"].append(m["login"])
         return groups
 

@@ -20,6 +20,8 @@ The GitHub provider can be used to sync users to GitHub organizations with eithe
 
 **Configuration Options**:  
 In the `github` configuration section you need to provide an `api_token` that has write access to the members of your GitHub organizations.
+It is recommended to create a new GitHub account for this to not bind this token to an active user. You do need to provide a `bot_user_login`.
+This username will be ignored during sync and should therefore be the username or your new account.
 The GitHub username of a user will be read out of a messenger attribute. A user can have multiple messenger attributes with their value being the messenger name followed by a colon and the actual username.
 Example given: messenger: "GitHub:FDHoho007" The messenger must be spelled exactly `GitHub`. The name of this messenger attribute is defined in the `messenger_attr`.
 
