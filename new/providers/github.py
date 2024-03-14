@@ -6,11 +6,11 @@ class GitHubProvider(IUpdateProvider):
         super().__init__("GitHub", config)
         self.attrs = [config["messenger_attr"]]
 
-    def api(self, method, url, data = None):
-        return lib.api(method, "https://api.github.com" + url, self.config["api_token"], data)
+    def api(self, method, url, data = None, json = False):
+        return lib.api(method, "https://api.github.com" + url, self.config["api_token"], data, json)
     
     def api_group(self, group, method, url, data = None):
-        return self.api(method, "/orgs/" + str(group["id"]) + "/members" + url, data)
+        return self.api(method, "/orgs/" + str(group["id"]) + "/members" + url, data, True)
 
     def getGroups(self):
         groups = self.getMappings()

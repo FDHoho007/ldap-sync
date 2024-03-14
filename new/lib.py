@@ -1,8 +1,7 @@
 import json, requests
 from base64 import b64encode
 
-def api(method, url, auth = None, data = None):
-    #app.debug(method + " " + final_url + " " + (data if data is not None else ""))
+def api(method, url, auth = None, data = None, json = False):
     headers = {}
     if auth is not None:
         if isinstance(auth, list):
@@ -12,12 +11,12 @@ def api(method, url, auth = None, data = None):
     if method == "GET":
         return requests.get(url, headers=headers).json()
     elif method == "POST":
-        if isinstance(data, str):
+        if json:
             return requests.post(url, data=data, headers=headers).json()
         else:
             return requests.post(url, json=data, headers=headers).json()
     elif method == "PUT":
-        if isinstance(data, str):
+        if json:
             return requests.put(url, data=data, headers=headers).json()
         else:
             return requests.put(url, json=data, headers=headers).json()

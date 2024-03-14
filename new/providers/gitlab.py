@@ -44,7 +44,7 @@ class GitLabProvider(IUpdateProvider):
         return processedMembers
 
     def addMember(self, group, memberId):
-        self.api_group(group, "POST", "", "user_id=" + str(memberId) + "&access_level=" + str(group["access_level"]))
+        self.api_group(group, "POST", "", {"user_id": str(memberId), "access_level": str(group["access_level"])})
 
     def removeMember(self, group, memberId):
         self.api_group(group, "DELETE", "/" + str(memberId))
