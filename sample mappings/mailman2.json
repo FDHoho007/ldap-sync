@@ -1,6 +1,0 @@
-[
-    {
-        "list_id": "staging",
-        "ldap_groups": ["admin"]
-    }
-]
