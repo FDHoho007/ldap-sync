@@ -1,4 +1,4 @@
-import lib
+import mailmanclient
 from lib import IUpdateProvider
 
 class Mailman3Provider(IUpdateProvider):
@@ -6,19 +6,18 @@ class Mailman3Provider(IUpdateProvider):
         super().__init__("Mailman3", config)
         self.attrs = [config["mail_attr"], self.config["name_attr"]]
         self.name_cache = {} # This is a ugly solution to a problem when adding a member
-
-    def api(self, method, url, data = None):
-        return lib.api(method, self.config["url"] + url, [self.config["admin_user"], self.config["admin_password"]], data)
+        self.client = mailmanclient.Client(self.config["url"], self.config["admin_user"], self.config["admin_password"])
 
     def getGroups(self):
         groups = self.getMappings()
         for group in groups:
             group["name"] = group["id"]
             group["members"] = []
-            subscriptions = self.api("POST", "/members/find", {"list_id": group["id"].replace("@", "."), "role": "member"})
-            if subscriptions["total_size"] > 0:
-                for subscription in subscriptions["entries"]:
-                    group["members"].append(subscription["email"])
+            for member in self.client.get_list(group["id"]).members:
+                group["members"].append(member.address.email)
+            # We need this hardcoded, since quietschie is a regular account, but we don't want him added to the mitglieder list.
+            if group["id"] == "mitglieder@fsinfo.fim.uni-passau.de":
+                group["members"].append("admins+enton-quietschie@fsinfo.fim.uni-passau.de")
         return groups
 
     def getMemberId(self, member):
@@ -32,16 +31,9 @@ class Mailman3Provider(IUpdateProvider):
         return []
 
     def addMember(self, group, memberId):
-        self.api("POST", "/members", {
-            "list_id": group["id"].replace("@", "."),
-            "subscriber": memberId,
-            # We don't know the name, only the email. Hence we take the name that was converted to this email before.
-            "display_name": self.name_cache[memberId] if memberId in self.name_cache else "",
-            "pre_verified": True,
-            "pre_confirmed": True,
-            "pre_approved": True,
-            "send_welcome_message": True
-        })
+        mailingList = self.client.get_list(group["id"])
+        mailingList.subscribe(memberId, self.name_cache[memberId] if memberId in self.name_cache else "", pre_verified=True, pre_confirmed=True, pre_approved=True)
 
     def removeMember(self, group, memberId):
-        self.api("DELETE", "/lists/" + group["id"].replace("@", ".") + "/roster/member", {"emails": [memberId]})
+        mailingList = self.client.get_list(group["id"])
+        mailingList.unsubscribe(memberId, pre_confirmed=True, pre_approved=True)

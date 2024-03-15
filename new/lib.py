@@ -8,20 +8,28 @@ def api(method, url, auth = None, data = None, json = False):
             headers = {"Authorization": "Basic " + b64encode((auth[0] + ":" + auth[1]).encode("utf-8")).decode()}
         else:
             headers = {"Authorization": "Bearer " + auth}
+    headers["User-Agent"] = "LDAP-Sync/1.0"
     if method == "GET":
         return requests.get(url, headers=headers).json()
     elif method == "POST":
         if json:
-            return requests.post(url, data=data, headers=headers).json()
+            response = requests.post(url, json=data, headers=headers)
         else:
-            return requests.post(url, json=data, headers=headers).json()
+            response = requests.post(url, data=data, headers=headers)
+        if response.text != "":
+            return response.json()
     elif method == "PUT":
         if json:
-            return requests.put(url, data=data, headers=headers).json()
+            response = requests.put(url, json=data, headers=headers)
         else:
-            return requests.put(url, json=data, headers=headers).json()
+            response = requests.put(url, data=data, headers=headers)
+        if response.text != "":
+            return response.json()
     elif method == "DELETE":
-        requests.delete(url, headers=headers).json()
+        if json:
+            requests.delete(url, json=data, headers=headers)
+        else:
+            requests.delete(url, data=data, headers=headers)
 
 # Interface implementations are expected to set self.name before calling the super constructor.
 # Interface implementations should be idempotent.

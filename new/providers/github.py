@@ -10,15 +10,18 @@ class GitHubProvider(IUpdateProvider):
         return lib.api(method, "https://api.github.com" + url, self.config["api_token"], data, json)
     
     def api_group(self, group, method, url, data = None):
-        return self.api(method, "/orgs/" + str(group["id"]) + "/members" + url, data, True)
+        return self.api(method, "/orgs/" + str(group["id"]) + url, data, True)
 
     def getGroups(self):
         groups = self.getMappings()
         for group in groups:
             group["members"] = []
-            for m in self.api_group(group, "GET", "?per_page=100&role=" + group["role"]):
+            for m in self.api_group(group, "GET", "/members?per_page=100&role=" + group["role"]):
                 if m["login"] != self.config["bot_user_login"]:
                     group["members"].append(m["login"])
+            invRole = "direct_member" if group["role"] == "member" else group["role"]
+            for m in self.api_group(group, "GET", "/invitations?per_page=100&role=" + invRole):
+                group["members"].append(m["login"])
         return groups
 
     def getMemberId(self, member):
@@ -38,9 +41,9 @@ class GitHubProvider(IUpdateProvider):
         return processedMembers
 
     def addMember(self, group, memberId):
-        self.api_group(group, "PUT", "hips/" + memberId, {"role": group["role"]})
+        self.api_group(group, "PUT", "/memberships/" + memberId, {"role": group["role"]})
 
     def removeMember(self, group, memberId):
         # GitHub users will be removed manually as decided by the admin team
-        # self.api_group(group, "DELETE", "hips/" + memberId)
+        # self.api_group(group, "DELETE", "/memberships/" + memberId)
         pass

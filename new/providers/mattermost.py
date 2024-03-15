@@ -8,7 +8,7 @@ class MattermostProvider(IUpdateProvider):
         self.mattermost_uid_cache = {} # The uid cache could probably even be stored on disk, since they won't change
 
     def api(self, method, url, data = None):
-        return lib.api(method, self.config["url"] + url, self.config["api_token"], data)
+        return lib.api(method, self.config["url"] + url, self.config["api_token"], data, True)
     
     def api_group(self, group, method, url, data = None):
         return self.api(method, "/teams/" + group["id"] + "/members" + url, data)

@@ -1,5 +1,5 @@
 # This is only to update members of an institute
-import re, requests, lxml.html, urllib.parse
+import re, requests, lxml.html, urllib.parse, time, os
 from lib import IUpdateProvider
 
 class StudIPProvider(IUpdateProvider):
@@ -7,11 +7,14 @@ class StudIPProvider(IUpdateProvider):
         super().__init__("StudIP", config)
         self.attrs = [config["username_attr"]]
         self.seminarSession = None
+        self.lastSessionUpdate = 0
+        self.studip_uid_cache = {}
 
     def api(self, method, url, data = None):
-        if self.seminarSession is None:
+        if self.seminarSession is None or self.lastSessionUpdate + 6*60*60 < time.time():
             self.seminarSession = self.getSession()
-        headers = {"Cookie": "Seminar_Session=" + self.seminarSession}
+            self.lastSessionUpdate = time.time()
+        headers = {"Cookie": "Seminar_Session=" + self.seminarSession, "Content-Type": "application/x-www-form-urlencoded"}
         url = self.config["url"] + url
         if method == "GET":
             return requests.get(url, headers=headers)
@@ -39,20 +42,12 @@ class StudIPProvider(IUpdateProvider):
         for group in groups:
             if not group["id"] in members:
                 members[group["id"]] = {}
-                doc = lxml.html.document_fromstring(self.api("GET", "/dispatch.php/institute/members?cid=" + group["id"]).text)
-                for tbody in doc.cssselect("#list_institute_members tbody"):
-                    id = None
-                    users = []
-                    for tr in tbody.cssselect("tr"):
-                        if id is None:
-                            a = tr.cssselect("th:last-child a")
-                            if len(a) == 0:
-                                break
-                            id = re.search(r"&group_id=([a-z0-9]+)", a[0].attrib["href"]).group(1)
-                        else:
-                            users.append(re.search(r"&username=([a-z0-9]+)", tr.cssselect("td:first-child a")[0].attrib["href"]).group(1))
-                    if id is not None:
-                        members[group["id"]][id] = users
+                parser = lxml.etree.HTMLParser(recover=True)
+                doc = lxml.etree.fromstring(self.api("GET", "/dispatch.php/admin/statusgroups?cid=" + group["id"]).text, parser=parser)
+                for table in doc.cssselect("#layout_content table"):
+                    members[group["id"]][table.attrib["id"]] = []
+                    for user in table.cssselect("tbody tr"):
+                        members[group["id"]][table.attrib["id"]].append(user.attrib["data-userid"])
             group["members"] = members[group["id"]][group["role_id"]] if group["role_id"] in members[group["id"]] else []
         return groups
 
@@ -60,7 +55,16 @@ class StudIPProvider(IUpdateProvider):
         username_attr = self.config["username_attr"]
         if not username_attr in member:
             return None
-        return member[username_attr]
+        username = member[username_attr]
+        if username not in self.studip_uid_cache:
+            self.api("GET", "/dispatch.php/messages/write")
+            data = self.api("GET", "/dispatch.php/multipersonsearch/ajax_search/add_adressees?s=" + username)
+            for user in data.json():
+                if re.fullmatch(r"^.+ \(" + username + "\)$", user["text"]):
+                    self.studip_uid_cache[username] = user["user_id"]
+                    return user["user_id"]
+        else:
+            return self.studip_uid_cache[username]
 
     def getProcessedMembers(self, processedGroups, group):
         processedMembers = []
@@ -69,14 +73,24 @@ class StudIPProvider(IUpdateProvider):
                 processedMembers.extend(processedGroup["mapped_members"])
         return processedMembers
 
-    def getTicket(self, cid, username):
-        doc = lxml.html.document_fromstring(self.api("GET", "/dispatch.php/settings/statusgruppen?cid=" + cid + "&username=" + username).text)
-        return (doc.cssselect("input[name=studip_ticket]")[0].value, doc.cssselect("input[name=security_token]")[0].value)
+    def getSecurityToken(self, cid):
+        doc = lxml.html.document_fromstring(self.api("GET", "/dispatch.php/admin/statusgroups?cid=" + cid).text)
+        for script in doc.cssselect("script"):
+            match = re.search(r"name:\s*'security_token',\s*value:\s*'([^']+)'", script.text_content())
+            if match:
+                return match.group(1)
     
     def addMember(self, group, memberId):
-        ticket = self.getTicket(group["id"], memberId)
-        self.api("POST", "/dispatch.php/settings/statusgruppen/assign?cid=" + group["id"] + "&username=" + memberId, "studip_ticket=" + ticket[0] + "&security_token=" + urllib.parse.quote(ticket[1]) + "&role_id=" + group["role_id"] + "&assign")
+        securityToken = self.getSecurityToken(group["id"])
+        name = "add_statusgroup" + group["role_id"]
+        os.system("curl --location --request POST '" + self.config["url"] + "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name + "' --header 'Cookie: Seminar_Session=" + self.seminarSession + "' --header 'Content-Type: application/x-www-form-urlencoded' --data-raw '" + name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=' > /dev/null")
+        #print(self.seminarSession)
+        #print("/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name)
+        #print(name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=")
+        #print({name + "_selectbox": [memberId], "security_token": securityToken, "confirm": ""})
+        #self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, {name + "_selectbox[]": [memberId], "security_token": securityToken, "confirm": ""})
+        #self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=")
 
     def removeMember(self, group, memberId):
-        ticket = self.getTicket(group["id"], memberId)
-        self.api("POST", "/dispatch.php/settings/statusgruppen/delete/" + group["role_id"] + "/1?cid=" + group["id"] + "&username=" + memberId, "studip_ticket=" + ticket[0] + "&security_token=" + urllib.parse.quote(ticket[1]) + "&cid=" + group["id"] + "&username=" + memberId + "&yes")
+        securityToken = self.getSecurityToken(group["id"])
+        self.api("POST", "/dispatch.php/admin/statusgroups/delete/" + group["role_id"] + "/" + memberId + "?cid=" + group["id"], {"security_token": securityToken, "confirm": ""})
