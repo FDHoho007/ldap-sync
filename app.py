@@ -1,5 +1,5 @@
 #!/bin/python3
-import configparser, argparse, ldap, time
+import configparser, argparse, ldap, time, sys
 from lib import ISetProvider, IUpdateProvider
 from providers.github import GitHubProvider
 from providers.gitlab import GitLabProvider
@@ -19,11 +19,14 @@ DRY_RUN = args.dry_run > 0
 def debug(provider, message):
     if verbose_level >= 2:
         print("[DEBUG | " + provider + "] " + message)
+        sys.stdout.flush()
 def info(provider, message):
     if verbose_level >= 1:
         print("[INFO | " + provider + "] " + message)
+        sys.stdout.flush()
 def error(provider, message):
     print("[ERROR | " + provider + "] " + message)
+    sys.stdout.flush()
 
 config = configparser.ConfigParser()
 config.read(args.config)

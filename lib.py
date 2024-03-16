@@ -39,9 +39,6 @@ class IProvider():
         self.config = config
         self.attrs = []
 
-    def error(self, message):
-        print("[ERROR | " + self.name + "] " + message)
-
     def getMappings(self):
         with open("mappings/" + self.name.lower() + ".json") as f:
             return json.load(f)
