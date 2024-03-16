@@ -1,6 +1,6 @@
 # LDAP Sync
 
-**Required apt packages**: python3-mailmanclient curl
+**Required apt packages**: python3-ldap python3-cssselect python3-mailmanclient curl
 
 This tool is inteded to sync group memberships from a ldap server to serveral different external providers.
 To use this tool, you first need to decide which providers you want to synchronize to.
