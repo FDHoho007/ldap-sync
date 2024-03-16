@@ -121,7 +121,8 @@ def sync():
             processed_groups.append(group)
 
 sync()
-while args.loop > 0:
+loop = int(args.loop)
+while loop > 0:
     debug("Sleep", "Sleeping for " + str(args.loop) + " seconds.")
-    time.sleep(args.loop)
+    time.sleep(loop)
     sync()
