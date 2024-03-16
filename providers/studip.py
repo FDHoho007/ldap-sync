@@ -10,16 +10,16 @@ class StudIPProvider(IUpdateProvider):
         self.lastSessionUpdate = 0
         self.studip_uid_cache = {}
 
-    def api(self, method, url, data = None):
+    def api(self, method, url, data = None, allowRedirects = True):
         if self.seminarSession is None or self.lastSessionUpdate + 6*60*60 < time.time():
             self.seminarSession = self.getSession()
             self.lastSessionUpdate = time.time()
-        headers = {"Cookie": "Seminar_Session=" + self.seminarSession, "Content-Type": "application/x-www-form-urlencoded"}
+        headers = {"Cookie": "Seminar_Session=" + self.seminarSession}
         url = self.config["url"] + url
         if method == "GET":
-            return requests.get(url, headers=headers)
+            return requests.get(url, headers=headers, allow_redirects=allowRedirects)
         elif method == "POST":
-            return requests.post(url, data=data, headers=headers)
+            return requests.post(url, data=data, headers=headers, allow_redirects=allowRedirects)
         
     def getSession(self):
         loginPage = requests.get(self.config["url"] + "/index.php?again=yes&adminlogin=1")
@@ -83,13 +83,9 @@ class StudIPProvider(IUpdateProvider):
     def addMember(self, group, memberId):
         securityToken = self.getSecurityToken(group["id"])
         name = "add_statusgroup" + group["role_id"]
-        os.system("curl --location --request POST '" + self.config["url"] + "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name + "' --header 'Cookie: Seminar_Session=" + self.seminarSession + "' --header 'Content-Type: application/x-www-form-urlencoded' --data-raw '" + name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=' > /dev/null")
-        #print(self.seminarSession)
-        #print("/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name)
-        #print(name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=")
-        #print({name + "_selectbox": [memberId], "security_token": securityToken, "confirm": ""})
-        #self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, {name + "_selectbox[]": [memberId], "security_token": securityToken, "confirm": ""})
-        #self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, name + "_selectbox[]=" + memberId + "&security_token=" + urllib.parse.quote(securityToken) + "&confirm=")
+        # Python does not send cookies with the next request when following requests. Therefore we simulate the redirect with our session.
+        response = self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, {name + "_selectbox[]": [memberId], "security_token": securityToken, "confirm": ""}, False)
+        self.api("GET", response.headers["Location"].removeprefix(self.config["url"]))
 
     def removeMember(self, group, memberId):
         securityToken = self.getSecurityToken(group["id"])
