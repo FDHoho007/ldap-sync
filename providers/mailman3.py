@@ -24,8 +24,16 @@ class Mailman3Provider(IUpdateProvider):
         mail_attr = self.config["mail_attr"]
         if not mail_attr in member:
             return None
-        self.name_cache[member[mail_attr]] = member[self.config["name_attr"]]
-        return member[mail_attr]
+        mail_addr = member[mail_attr]
+        if isinstance(mail_addr, list):
+            for email in mail_addr:
+                if email.endswith('@fim.uni-passau.de'):
+                    mail_addr = email
+                    break
+            if isinstance(mail_addr, list):
+                mail_addr = mail_addr[0]
+        self.name_cache[mail_addr] = member[self.config["name_attr"]]
+        return mail_addr
     
     def getProcessedMembers(self, processedGroups, group):
         return []
