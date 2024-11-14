@@ -44,7 +44,7 @@ class StudIPProvider(IUpdateProvider):
                 members[group["id"]] = {}
                 parser = lxml.etree.HTMLParser(recover=True)
                 doc = lxml.etree.fromstring(self.api("GET", "/dispatch.php/admin/statusgroups?cid=" + group["id"]).text, parser=parser)
-                for table in doc.cssselect("#layout_content table"):
+                for table in doc.cssselect("#content table"):
                     members[group["id"]][table.attrib["id"]] = []
                     for user in table.cssselect("tbody tr"):
                         members[group["id"]][table.attrib["id"]].append(user.attrib["data-userid"])
@@ -86,6 +86,7 @@ class StudIPProvider(IUpdateProvider):
         # Python does not send cookies with the next request when following requests. Therefore we simulate the redirect with our session.
         response = self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, {name + "_selectbox[]": [memberId], "security_token": securityToken, "confirm": ""}, False)
         self.api("GET", response.headers["Location"].removeprefix(self.config["url"]))
+        self.api("POST", "/dispatch.php/admin/statusgroups/sortAlphabetic/" + group["role_id"] + "?cid=" + group["id"], {"security_token": securityToken, "confirm": ""})
 
     def removeMember(self, group, memberId):
         securityToken = self.getSecurityToken(group["id"])
