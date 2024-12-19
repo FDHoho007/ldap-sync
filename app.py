@@ -4,7 +4,8 @@ from lib import ISetProvider, IUpdateProvider
 from providers.github import GitHubProvider
 from providers.gitlab import GitLabProvider
 from providers.mailman3 import Mailman3Provider
-from providers.mattermost import MattermostProvider
+from providers.mattermost_team import MattermostTeamProvider
+from providers.mattermost_channel import MattermostChannelProvider
 from providers.redmine import RedmineProvider
 from providers.studip import StudIPProvider
 
@@ -35,7 +36,7 @@ ldap_connection = ldap.initialize(config["ldap"]["uri"])
 ldap_connection.simple_bind_s(who=config["ldap"]["bind_dn"], cred=config["ldap"]["bind_pw"])
 
 # Put all active providers into this array
-providers = [GitHubProvider(config["github"]), GitLabProvider(config["gitlab"]), Mailman3Provider(config["mailman3"]), MattermostProvider(config["mattermost"]), RedmineProvider(config["redmine"]), StudIPProvider(config["studip"])]
+providers = [GitHubProvider(config["github"]), GitLabProvider(config["gitlab"]), Mailman3Provider(config["mailman3"]), MattermostTeamProvider(config["mattermost"]), MattermostChannelProvider(config["mattermost"]), RedmineProvider(config["redmine"]), StudIPProvider(config["studip"])]
 
 attrs = [config["member"]["uid_attr"]]
 for provider in providers:

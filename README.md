@@ -62,17 +62,17 @@ The `mappings/mailman3.json` must contain an array of mappings. A mapping is a s
 
 ## Mattermost Provider
 
-The Mattermost provider can be used to sync users to Mattermost teams.
+The Mattermost provider can be used to sync users to Mattermost teams and channels.
 
 **Configuration Options**:  
 For this provider you need to create a bot account for your mattermost instance (`url` field) who is team administrator in the teams to manage. Set the `api_token` and `bot_user_id` as well as the `username_attr` which contains the Mattermost username of a user.
 
 **Mapping Scheme**:  
-The `mappings/mattermost.json` must contain an array of mappings. A mapping is a simple object holding these four attributes:
-* `id`: The id of the mattermost team.
+The `mappings/mattermost-{teams,channels}.json` must contain an array of mappings. A mapping is a simple object holding these four attributes:
+* `id`: The id of the mattermost team or channel. Channel ids can be resolved like this: `<mattermost url>/api/v4/teams/<team id>/channels/name/<url part of the channel>`. Use `api_token` as Bearer token.
 * `name`: A display name for this mapping, shown in the logs.
-* `roles`: Either `team_user` or `team_user team_admin` defining the roles of mapped users.
-* `ldap_groups`: An array of ldap groups which should be mapped to this Mattermost team.
+* `roles`: Either `team_user` or `team_user team_admin` defining the roles of mapped users. For channels use `channel_user` or `channel_admin` respectively.
+* `ldap_groups`: An array of ldap groups which should be mapped to this Mattermost team or channel.
 
 ## Redmine Provider
 

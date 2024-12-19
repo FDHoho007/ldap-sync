@@ -1,17 +1,18 @@
 import lib
 from lib import IUpdateProvider
 
-class MattermostProvider(IUpdateProvider):
-    def __init__(self, config):
-        super().__init__("Mattermost", config)
+class IMattermostProvider(IUpdateProvider):
+    def __init__(self, name, config, url_part):
+        super().__init__(name, config)
         self.attrs = [config["username_attr"]]
         self.mattermost_uid_cache = {} # The uid cache could probably even be stored on disk, since they won't change
+        self.url_part = url_part
 
     def api(self, method, url, data = None):
         return lib.api(method, self.config["url"] + url, self.config["api_token"], data, True)
     
     def api_group(self, group, method, url, data = None):
-        return self.api(method, "/teams/" + group["id"] + "/members" + url, data)
+        return self.api(method, "/" + self.url_part + "/" + group["id"] + "/members" + url, data)
 
     def getGroups(self):
         groups = self.getMappings()
@@ -42,7 +43,10 @@ class MattermostProvider(IUpdateProvider):
         return processedMembers
 
     def addMember(self, group, memberId):
-        self.api_group(group, "POST", "", {"user_id": memberId, "team_id": group["id"]})
+        user_data = {"user_id": memberId}
+        if self.url_part == "teams":
+            user_data["team_id"] = group["id"]
+        self.api_group(group, "POST", "", user_data)
         self.api_group(group, "PUT", "/" + memberId + "/roles", {"roles": group["roles"]})
 
     def removeMember(self, group, memberId):
