@@ -41,7 +41,9 @@ class Mailman3Provider(IUpdateProvider):
     def addMember(self, group, memberId):
         mailingList = self.client.get_list(group["id"])
         mailingList.subscribe(memberId, self.name_cache[memberId] if memberId in self.name_cache else "", pre_verified=True, pre_confirmed=True, pre_approved=True)
+        return True
 
     def removeMember(self, group, memberId):
         mailingList = self.client.get_list(group["id"])
         mailingList.unsubscribe(memberId, pre_confirmed=True, pre_approved=True)
+        return True

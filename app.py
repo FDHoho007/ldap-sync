@@ -110,15 +110,18 @@ def sync():
             elif isinstance(provider, IUpdateProvider):
                 updated = False
                 for member in current_members - mapped_members - processed_members:
+                    result = True
                     if not DRY_RUN:
-                        provider.removeMember(group, member)
-                    if provider_name != "GitHub": # We dont remove GitHub users, dont spam logs.
+                        result = provider.removeMember(group, member)
+                    if result:
                         info(provider_name, "Removed member " + str(member) + " from group " + group_name + ".")
                     updated = True
                 for member in mapped_members - current_members - processed_members:
+                    result = True
                     if not DRY_RUN:
-                        provider.addMember(group, member)
-                    info(provider_name, "Added member " + names[member] + "(" + str(member) + ") to group " + group_name + ".")
+                        result = provider.addMember(group, member)
+                    if result:
+                        info(provider_name, "Added member " + names[member] + "(" + str(member) + ") to group " + group_name + ".")
                     updated = True
                 if not updated:
                     debug(provider_name, "Group " + group_name + " is already up-to-date.")

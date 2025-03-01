@@ -42,8 +42,9 @@ class GitHubProvider(IUpdateProvider):
 
     def addMember(self, group, memberId):
         self.api_group(group, "PUT", "/memberships/" + memberId, {"role": group["role"]})
+        return True
 
     def removeMember(self, group, memberId):
         # GitHub users will be removed manually as decided by the admin team
         # self.api_group(group, "DELETE", "/memberships/" + memberId)
-        pass
+        return False

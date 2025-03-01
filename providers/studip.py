@@ -87,7 +87,9 @@ class StudIPProvider(IUpdateProvider):
         response = self.api("POST", "/dispatch.php/multipersonsearch/js_form_exec/?cid=" + group["id"] + "&name=" + name, {name + "_selectbox[]": [memberId], "security_token": securityToken, "confirm": ""}, False)
         self.api("GET", response.headers["Location"].removeprefix(self.config["url"]))
         self.api("POST", "/dispatch.php/admin/statusgroups/sortAlphabetic/" + group["role_id"] + "?cid=" + group["id"], {"security_token": securityToken, "confirm": ""})
+        return True
 
     def removeMember(self, group, memberId):
         securityToken = self.getSecurityToken(group["id"])
         self.api("POST", "/dispatch.php/admin/statusgroups/delete/" + group["role_id"] + "/" + memberId + "?cid=" + group["id"], {"security_token": securityToken, "confirm": ""})
+        return True

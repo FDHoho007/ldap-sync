@@ -48,6 +48,8 @@ class IMattermostProvider(IUpdateProvider):
             user_data["team_id"] = group["id"]
         self.api_group(group, "POST", "", user_data)
         self.api_group(group, "PUT", "/" + memberId + "/roles", {"roles": group["roles"]})
+        return True
 
     def removeMember(self, group, memberId):
         self.api_group(group, "DELETE", "/" + memberId)
+        return True

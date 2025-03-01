@@ -45,6 +45,8 @@ class GitLabProvider(IUpdateProvider):
 
     def addMember(self, group, memberId):
         self.api_group(group, "POST", "", {"user_id": str(memberId), "access_level": str(group["access_level"])})
+        return True
 
     def removeMember(self, group, memberId):
         self.api_group(group, "DELETE", "/" + str(memberId))
+        return True
